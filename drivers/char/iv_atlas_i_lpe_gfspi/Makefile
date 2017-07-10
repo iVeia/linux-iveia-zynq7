@@ -1,0 +1,1 @@
+obj-$(CONFIG_IVEIA_ATLAS_I_LPE_GFSPI)	:= main.o

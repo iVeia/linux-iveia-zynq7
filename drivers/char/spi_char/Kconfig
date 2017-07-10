@@ -1,0 +1,9 @@
+config IVEIA_GFSPI
+	tristate "iVeia's GigaFlex SPI interface"
+	depends on IVEIA_TITANV4 || IVEIA_TITANV5
+	default n
+	---help---
+	  iVeia's GigaFlex SPI interface
+	  
+	  This interface is used for control and configurtation of a iVeia
+	  GigaFlex220 card.

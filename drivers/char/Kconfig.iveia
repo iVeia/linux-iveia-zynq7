@@ -1,0 +1,14 @@
+config IVEIA_OCP
+	bool "iVeia OCP"
+
+config IVEIA_ZAP
+	bool "iVeia ZAP"
+
+config IVEIA_EVENTS
+	bool "iVeia Events"
+
+config IVEIA_IOMEM
+	bool "iVeia IOMEM"
+
+config IVEIA_FRAMEWORK_ON_GP1
+	bool "iVeia Framework on GP1"

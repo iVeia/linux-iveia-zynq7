@@ -1,0 +1,9 @@
+obj-$(CONFIG_IVEIA_ZAP)		+= zap/
+obj-$(CONFIG_IVEIA_GFSPI)	+= spi_char/
+obj-$(CONFIG_IVEIA_OCP)	+= ocp/
+obj-$(CONFIG_IVEIA_ZAP_INTR)	+= zap_intr/
+obj-$(CONFIG_IVEIA_EVENTS)	+= events/
+obj-$(CONFIG_IVEIA_IOMEM)	+= iomem/
+obj-$(CONFIG_IVEIA_ATLAS_I_LPE_GFSPI)	+= iv_atlas_i_lpe_gfspi/
+obj-$(CONFIG_IVEIA_BITBANGED_I2C)	+= iv_bitbanged_i2c/
+

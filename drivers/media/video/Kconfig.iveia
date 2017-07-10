@@ -1,0 +1,7 @@
+config VIDEO_MT9P111
+	tristate "Aptina MT9P111 5MP CMOS IMAGE SENSOR"
+	depends on VIDEO_V4L2 && I2C
+	---help---
+	  This is a Video4Linux2 sensor-level driver for the Aptina MT9P111
+	  image sensor.
+

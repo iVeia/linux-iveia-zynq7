@@ -1,0 +1,1 @@
+obj-$(CONFIG_I2C_OCP)	+= i2c-iv_ocp.o

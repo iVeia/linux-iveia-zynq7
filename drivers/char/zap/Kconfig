@@ -1,0 +1,11 @@
+config IVEIA_ZAP
+	tristate "iVeia's ZAP (Zero-copy Application Port) interface"
+	depends on IVEIA_TITANV4 || IVEIA_TITANV5 || MACH_IV_ATLAS_I_LPE || MACH_IV_ATLAS_I_Z7E
+	default n
+	---help---
+	  iVeia's ZAP (Zero-copy Application Port) interface
+	  
+	  This driver is used only for iVeia's Titan line of processing modules.
+	  
+	  This interface is used for high-speed data transfer between a User FPGA
+	  Application and the User Linx Application running on the hardcore PPC.

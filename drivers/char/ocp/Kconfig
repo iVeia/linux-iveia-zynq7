@@ -1,0 +1,9 @@
+config IVEIA_OCP
+	tristate "iVeia's OCP Register interface"
+	depends on IVEIA_TITANV5 || IVEIA_TITAN_PPCX || MACH_IV_ATLAS_I_LPE || MACH_IV_ATLAS_I_Z7E
+	default n
+	---help---
+	  iVeia's OCP Register interface
+	  
+	  This driver provides support for an Open Cores Protocol generic register
+	  interface.

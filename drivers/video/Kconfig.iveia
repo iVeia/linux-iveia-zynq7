@@ -1,0 +1,9 @@
+config IVEIA_FB
+	tristate "iVeia's Framebuffer for Zynq"
+	depends on ( MACH_IV_ATLAS_I_Z7E || ARCH_IV_ATLAS_II_Z8 || ARCH_ZYNQMP)
+	select FB_SYS_FOPS
+	select FB_SYS_FILLRECT
+	select FB_SYS_COPYAREA
+	select FB_SYS_IMAGEBLIT
+	default n
+

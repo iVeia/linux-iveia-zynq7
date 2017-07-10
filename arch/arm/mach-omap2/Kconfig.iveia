@@ -1,0 +1,7 @@
+config MACH_IV_ATLAS_I_LPE
+	bool "iVeia Atlas-I LPe"
+	depends on ARCH_OMAP3
+	select OMAP_PACKAGE_CUS
+	select OMAP_MUX
+	select MCP464X_DPOT
+

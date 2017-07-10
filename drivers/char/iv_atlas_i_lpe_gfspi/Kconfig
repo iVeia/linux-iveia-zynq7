@@ -1,0 +1,19 @@
+config IVEIA_ATLAS_I_LPE_GFSPI
+	tristate "iVeia's GigaFlex SPI interface for the Atlas-I-LPe mainboard"
+	depends on MACH_IV_ATLAS_I_LPE
+	default n
+	---help---
+	  iVeia's GigaFlex SPI interface for the Atlas-I-LPe mainboard
+	  
+	  This interface is used to access the SPI bus on a GigaFlex
+	  daughtercard when using a Atlas-I-LPe mainboard.
+
+config IVEIA_GFSPI_MUXED_CS
+	tristate "iVeia's GigaFlex SPI interface for the Atlas-I-LPe mainboard"
+	depends on IVEIA_ATLAS_I_LPE_GFSPI
+	default n
+	---help---
+	  iVeia's GigaFlex SPI interface for the Atlas-I-LPe mainboard
+	  
+	  This interface is used to access the SPI bus on a GigaFlex
+	  daughtercard when using a Atlas-I-LPe mainboard.

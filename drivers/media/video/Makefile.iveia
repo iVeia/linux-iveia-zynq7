@@ -1,0 +1,1 @@
+obj-$(CONFIG_VIDEO_MT9P111) += mt9p111.o

@@ -1,0 +1,50 @@
+config INPUT_IV_IO_ARCADIA_PWRKEY
+	tristate "iVeia IO Arcadia Carrier Power Key"
+	depends on MACH_IV_ATLAS_I_LPE
+	depends on GPIOLIB && GENERIC_GPIO
+	help
+	  If you say yes here, you can use the iVeia IO Arcadia Carrier board
+	  power key as a soft power key input.
+
+	  If unsure, say Y.
+
+config INPUT_IV_IO_COPPERRUN
+	tristate "iVeia IO Copper Run Carrier Buttons"
+	depends on MACH_IV_ATLAS_I_LPE
+	depends on GPIOLIB && GENERIC_GPIO
+	help
+	  If you say yes here, you can use the iVeia IO Copper Run Carrier board
+	  buttons.
+
+	  If unsure, say Y.
+
+config INPUT_LSM303DLM_ACCEL
+	tristate "ST Microelectonics LSM303DLM Accelerometer driver"
+	depends on I2C
+	select INPUT_POLLDEV
+	help
+      Say Y here to use ST Microelectonics LSM303DLM Accelerometer driver based
+      on an I2C interface.
+
+	  If unsure, say N.
+
+config INPUT_LSM303DLM_MAG
+	tristate "ST Microelectonics LSM303DLM Magnetometer driver"
+	depends on I2C
+	select INPUT_POLLDEV
+	help
+      Say Y here to use ST Microelectonics LSM303DLM Magnetometer driver based
+      on an I2C interface.
+
+	  If unsure, say N.
+
+config INPUT_ISL29013
+	tristate "Intersil 29013 Ambient Light Sensor driver"
+	depends on I2C
+	select INPUT_POLLDEV
+	help
+      Say Y here to use Intersil 29013 Ambient Light Sensor driver based
+      on an I2C interface.
+
+	  If unsure, say N.
+

@@ -1,0 +1,7 @@
+config IVEIA_IOMEM
+	tristate "Generic iomem interface"
+	default y
+	---help---
+	  Generic iomem interface
+	  
+	  This driver allows direct access to physical memory via ioremap().

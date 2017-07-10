@@ -1,0 +1,8 @@
+config IVEIA_ZAP_INTR
+	tristate "iVeia's ZAP Interrupt Interface"
+	depends on MACH_IV_ATLAS_I_LPE
+	default n
+	---help---
+	  iVeia's ZAP Interrupt Register interface
+	  
+	  This driver is a ZAP Interrupt interface driver

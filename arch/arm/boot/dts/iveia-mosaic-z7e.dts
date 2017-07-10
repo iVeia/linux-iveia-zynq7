@@ -1,0 +1,176 @@
+/*
+ *  Copyright (C) 2011 - 2014 Xilinx
+ *  Copyright (C) 2012 National Instruments Corp.
+ *
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+/dts-v1/;
+/include/ "zynq-7000.dtsi"
+
+/ {
+        model = "iVeia Atlas-I-Z7e";
+        compatible = "iveia,atlas-i-z7e";
+
+	aliases {
+		ethernet0 = &gem0;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		serial0 = &uart1;
+		spi0 = &qspi;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x40000000>;
+	};
+
+	chosen {
+		bootargs = "console=ttyPS0,115200 root=/dev/ram rw earlyprintk";
+		linux,stdout-path = "/amba/serial@e0001000";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		ds23 {
+			label = "ds23";
+			gpios = <&gpio0 10 0>;
+			linux,default-trigger = "heartbeat";
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+		sw14 {
+			label = "sw14";
+			gpios = <&gpio0 12 0>;
+			linux,code = <108>; /* down */
+			gpio-key,wakeup;
+			autorepeat;
+		};
+		sw13 {
+			label = "sw13";
+			gpios = <&gpio0 14 0>;
+			linux,code = <103>; /* up */
+			gpio-key,wakeup;
+			autorepeat;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		ds23 {
+			label = "ds23";
+			gpios = <&gpio0 10 0>;
+			linux,default-trigger = "heartbeat";
+		};
+	};
+
+	xlnk {
+		compatible = "xlnx,xlnk-1.0";
+		clock-names = "clk166", "clk150", "clk100", "clk200";
+		clocks = <&clkc 15>, <&clkc 16>, <&clkc 17>, <&clkc 18>;
+	};
+};
+
+&qspi {
+	status = "okay";
+	is-dual = <0>;
+	num-cs = <1>;
+	flash@0 {
+		compatible = "n25q128a11";
+		reg = <0x0>;
+		spi-tx-bus-width = <1>;
+		spi-rx-bus-width = <4>;
+		spi-max-frequency = <50000000>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		partition@qspi-fsbl-uboot {
+			label = "qspi-fsbl-uboot";
+			reg = <0x0 0x100000>;
+		};
+		partition@qspi-linux {
+			label = "qspi-linux";
+			reg = <0x100000 0x500000>;
+		};
+		partition@qspi-device-tree {
+			label = "qspi-device-tree";
+			reg = <0x600000 0x20000>;
+		};
+		partition@qspi-rootfs {
+			label = "qspi-rootfs";
+			reg = <0x620000 0x5E0000>;
+		};
+		partition@qspi-bitstream {
+			label = "qspi-bitstream";
+			reg = <0xC00000 0x400000>;
+		};
+	};
+};
+
+&usb0 {
+	status = "okay";
+	dr_mode = "host";
+	phy_type = "ulpi";
+	usb-reset = <&gpio0 7 0>;
+};
+
+&can0 {
+	status = "okay";
+};
+
+&gem0 {
+	status = "okay";
+
+    phy-handle = <&mosaic_phy0>;
+    phy-mode = "rgmii-id";
+    use-internal-mdio = <0>;
+};
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+    io_00079_mdio@40 {  //Mosaic Tri-Mode Ethernet PHY
+        compatible = "iveia,mdio-bsc-i2c";
+        reg = <0x41>;
+	    #address-cells = <1>;
+	    #size-cells = <0>;
+
+	    mosaic_phy0: phy@1 {
+		    compatible = "ethernet-phy-ieee802.3-c22";
+	        device_type = "ethernet-phy";
+			reg = <1>;
+	    };
+    };
+
+};
+
+&i2c1 {
+        status = "okay";
+        clock-frequency = <400000>;
+};
+
+&sdhci0 {
+	status = "okay";
+	non-removable;
+};
+
+&sdhci1 {
+        status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+};

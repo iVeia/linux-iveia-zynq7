@@ -1,0 +1,16 @@
+obj-$(CONFIG_MACH_IV_ATLAS_I_LPE) += \
+					board-iv-atlas-i-lpe.o \
+					board-iv-io-common.o \
+					board-iv-io-sandcreek.o \
+					board-iv-io-arcadia.o \
+					board-iv-io-copperrun.o \
+					board-iv-io-atlas-ii-gf.o \
+					board-iv-io-squid410.o \
+					board-iv-io-triumph.o \
+					board-iv-io-triumph-r.o \
+					board-iv-io-sandcreek-ii.o \
+					board-iv-io-atp.o \
+					hsmmc.o
+ifeq ($(CONFIG_VIDEO_MT9P111),y)
+obj-$(CONFIG_MACH_IV_ATLAS_I_LPE) += board-iv-atlas-i-lpe-camera.o
+endif

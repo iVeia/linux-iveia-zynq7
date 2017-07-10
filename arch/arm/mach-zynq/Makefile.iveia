@@ -1,0 +1,7 @@
+obj-$(CONFIG_MACH_IV_ATLAS_I_Z7E) += \
+					board_iv-atlas-i-z7e.o \
+					board-iv-io-maveriq.o \
+					board-iv-io-triumph.o \
+					board-iv-io-bluepoint.o \
+					board-iv-io-common.o
+

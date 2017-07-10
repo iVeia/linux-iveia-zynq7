@@ -1,0 +1,24 @@
+config MCP464X_DPOT
+	bool "Microchip MCP454X/456X/464X/466X Digital Potentiometer"
+	depends on I2C
+	default n
+	help
+	  This is an I2C driver for communicating with the digital poteniometer.
+	  Say Y here if you have one of the supported Microchip digital potentiometers.
+
+config LTC2635_DAC
+	bool "Linear Technology Quad 12-/10-/8-bit I2C DAC"
+	depends on I2C
+	default n
+	help
+	  This is an I2C driver for communicating with the digital-to-analog converter.
+	  Say Y here if you have one of the supported Linear Technology DACs.
+
+config LTC2942_BATT_GAS_GAUGE
+	bool "Linear Technology I2C Battery Gas Gauge"
+	depends on I2C
+	default n
+	help
+	  This is an I2C driver for communicating with the battery gas gauge.
+	  Say Y here if you have a Linear Technology 2942 battery gas gauge.
+

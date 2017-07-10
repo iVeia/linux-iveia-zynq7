@@ -1,0 +1,7 @@
+config IVEIA_BITBANGED_I2C
+	tristate "iVeia Titan Bitbanged I2C driver"
+	default n
+	---help---
+	  Driver for iVeia's Titan board, that provides bitbanged I2C support.  
+	  Allows access to Titan local and remote (on Gigaflex card, or backplane)
+	  Bitbanged I2C busses.

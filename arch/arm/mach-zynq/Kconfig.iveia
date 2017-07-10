@@ -1,0 +1,2 @@
+config MACH_IV_ATLAS_I_Z7E
+	bool "iVeia Atlas-I-Z7e"

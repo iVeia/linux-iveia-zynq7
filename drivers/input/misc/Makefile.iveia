@@ -1,0 +1,5 @@
+obj-$(CONFIG_INPUT_IV_IO_ARCADIA_PWRKEY)	+= iv-io-arcadia-pwrkey.o
+obj-$(CONFIG_INPUT_IV_IO_COPPERRUN)	+= iv-io-copperrun.o
+obj-$(CONFIG_INPUT_LSM303DLM_ACCEL)	+= lsm303dlm_accel.o
+obj-$(CONFIG_INPUT_LSM303DLM_MAG)	+= lsm303dlm_mag.o
+obj-$(CONFIG_INPUT_ISL29013)	    += isl29013.o
