@@ -1,0 +1,56 @@
+#!/bin/sh
+
+. $BOOT_CFG
+
+mkdir -p /media/nfs
+
+for i in 0 1 2 3; do
+    mkdir -p /media/sd$i
+    mount /dev/mmcblk${i}p1 /media/sd$i 2> /dev/null
+    RC=$?
+    if [ 0 -ne $RC ]; then
+		rmdir /media/sd$i
+	fi
+done
+
+# Figure out the SDHOME parition.  We assume it is always the last partition
+# on the booting SD card.  The booting SD card is determined from the kernel
+# command line parameter iv_mmc
+IV_MMC=`cat /proc/cmdline | tr " " "\n" | grep iv_mmc= | cut -d= -f2`
+test -z "${IV_MMC}" && IV_MMC=0
+HOME_DEV=`blockdev --report /dev/mmcblk${IV_MMC}* 2>/dev/null | tail -1 | awk '{print $NF}'`
+
+
+# Select the mount point based on our rootfs type.  Rationale: if you're on
+# SD, you want you /root to write to SD, and if on NFS you want /root to be on
+# NFS (but you'll still have a mounted writable SD somewhere).
+if [ "SDFS" = "$ROOTFS" -o -z "$ROOTFS" ]; then
+    MOUNT_POINT=/root
+else  # NFS
+    MOUNT_POINT=/mnt/sdhome
+fi
+
+# Attempt to mount a writeable partition (SDHOME) as the root user's home
+# directory.  Try in successive steps:
+#       - Mount HOME_DEV with user options,
+#       - If fails, mount HOME_DEV without options,
+#       - If fails, mount to root dir on the boot parition
+# fails.
+FALLBACK_HOME="/media/sd/root"
+echo "Mounting $HOME_DEV as $MOUNT_POINT with user options:"
+echo "    ${SD_HOMEPART_MOUNT_OPTS:-none}"
+mount $SD_HOMEPART_MOUNT_OPTS $HOME_DEV $MOUNT_POINT 2> /dev/null
+if [ $? -ne 0 ]; then
+    echo "Mount of $HOME_DEV failed."
+    echo "Remounting $HOME_DEV as $MOUNT_POINT without options."
+    mount $HOME_DEV $MOUNT_POINT 2> /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Mount of $HOME_DEV failed."
+        echo "Mounting $FALLBACK_HOME as $MOUNT_POINT."
+        test ! -e $dev && mkdir -p $dev
+        mount $FALLBACK_HOME $MOUNT_POINT 2> /dev/null
+        if [ $? -ne 0 ]; then
+            echo "Mount of $FALLBACK_HOME failed."
+        fi
+    fi
+fi

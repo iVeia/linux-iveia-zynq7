@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Create sound /dev links.  All devices themselves are created with busybox's
+# makedevs command
+
+cd /dev
+ln -sf adsp0 adsp
+ln -sf amidi0 amidi
+ln -sf audio0 audio
+ln -sf dsp0 dsp
+ln -sf midi00 midi
+ln -sf mixer0 mixer
+ln -sf music sequencer2

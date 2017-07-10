@@ -1,0 +1,136 @@
+#!/bin/bash
+#
+# Power key daemon
+#
+# Simple daemon to process power key presses and run a conf-defined action.
+#
+# /etc/pwrkeyd.conf should contain a single word, that is the action to take
+# when the power key is pressed:
+#   sleep - Suspend to RAM
+#   poweroff - Run the "poweroff" command.
+# If the conf file does not exist, the default is "poweroff".
+#
+
+PROG=pwrkeyd
+PIDFILE=/var/run/${PROG}.pid
+
+#
+# Determine board ordinal to determine power key handler event.
+#
+IV_IO_ARCADIA_ORD="00053"
+IO_ORD=`cat /proc/cmdline | tr " " "\n" | grep ^iv_io= | cut -d- -f2`
+if [ "${IO_ORD}" = "${IV_IO_ARCADIA_ORD}" ]; then
+    PWRKEY_NAME=iv_io_arcadia_pwrkey 
+else 
+    PWRKEY_NAME=twl4030_pwrbutton
+fi
+EVENT_NUM=`grep -l ${PWRKEY_NAME} /sys/class/input/input*/name | head -1 | cut -d/ -f5 | cut -c6-`
+
+#
+# Events are processed by reading a "struct input_event" from the event
+# character device, as defined in <linux/input.h>.
+#
+EVENT_STRUCT_SIZE=16
+EVENT_TIME_BYTES=1-8
+EVENT_TYPE_BYTES=9-10
+EVENT_CODE_BYTES=11-12
+EVENT_VALUE_BYTES=13-16
+
+EVENT_TYPE_PWRKEY="01 00"
+EVENT_CODE_PWRKEY="74 00"
+EVENT_VALUE_PWRKEY_PRESSED="01 00 00 00"
+EVENT_VALUE_PWRKEY_RELEASED="00 00 00 00"
+
+CONF=/etc/${PROG}.conf
+DEFAULT_ACTION=poweroff
+ACTION=`cat ${CONF} 2>/dev/null`
+if [ -z "$ACTION" ]; then
+    ACTION=${DEFAULT_ACTION}
+fi
+
+do_sleep() {
+    echo mem > /sys/power/state
+}
+
+do_poweroff() {
+    poweroff
+}
+
+start() {
+    if [ -f ${PIDFILE} ]; then
+        echo "${PROG}: Already started."
+        return
+    fi
+    echo $"Starting $PROG" 
+
+    if [ -z "${EVENT_NUM}" ]; then
+        echo "${PROG}: Can't determine event number for power key $PWRKEY_NAME"
+        return
+    fi
+    EVENTDEV=/dev/input/event${EVENT_NUM}
+
+    PRESSED=0
+    while true; do
+        EVENT=`dd if=${EVENTDEV} bs=${EVENT_STRUCT_SIZE} count=1 2>/dev/null \
+            | od -t x1 | head -1 | cut -d' ' -f2-`
+
+        EVENT_TIME=`echo ${EVENT} | cut -d' ' -f${EVENT_TIME_BYTES}`
+        EVENT_TYPE=`echo ${EVENT} | cut -d' ' -f${EVENT_TYPE_BYTES}`
+        EVENT_CODE=`echo ${EVENT} | cut -d' ' -f${EVENT_CODE_BYTES}`
+        EVENT_VALUE=`echo ${EVENT} | cut -d' ' -f${EVENT_VALUE_BYTES}`
+
+        if [ "${EVENT_TYPE}" != "${EVENT_TYPE_PWRKEY}" ]; then continue; fi
+        if [ "${EVENT_CODE}" != "${EVENT_CODE_PWRKEY}" ]; then continue; fi
+        if [ "${EVENT_VALUE}" = "${EVENT_VALUE_PWRKEY_PRESSED}" ]; then 
+            PRESSED=1
+        elif [ "${EVENT_VALUE}" = "${EVENT_VALUE_PWRKEY_RELEASED}" -a $PRESSED -eq 1 ]; then 
+            PRESSED=0
+            do_${ACTION}
+        fi
+    done &
+    echo $! > ${PIDFILE}
+}
+
+stop() {
+    if [ ! -f ${PIDFILE} ]; then
+        echo "${PROG}: Not running."
+        return
+    fi
+    echo $"Stopping $PROG" 
+    
+    # kill the entire process group.
+    PWR_PID=`cat ${PIDFILE}`
+    PWR_PGRP=`ps h -p ${PWR_PID} -o pgrp`
+    pkill -g ${PWR_PGRP}
+    rm ${PIDFILE}
+}
+
+
+restart() {
+    stop
+    start
+}   
+
+reload() {
+    restart
+}   
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    reload|restart)
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?
+exit $RETVAL
+#
+

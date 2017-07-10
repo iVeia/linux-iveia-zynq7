@@ -1,0 +1,6 @@
+#<id>:<runlevels>:<action>:<process>
+::sysinit:/etc/rc.d/rcS
+::askfirst:-/bin/sh
+::ctrlaltdel:/sbin/reboot
+::shutdown:/bin/umount -a -r
+::restart:/sbin/init

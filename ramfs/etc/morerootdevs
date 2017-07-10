@@ -1,0 +1,28 @@
+#
+# Dynamically created device nodes.
+# 
+# First arg must be the path where the dev dir exists.
+#
+makedev () {
+    ROOTPATH="$1"
+    NAME="$2"
+    TYPE="$3"
+    MINOR="$4"
+    if [ -n "$MINOR" ]; then
+        DEVPATH="$ROOTPATH/dev/${NAME}${MINOR}"
+    else
+        DEVPATH="$ROOTPATH/dev/${NAME}"
+        MINOR=0
+    fi
+    MAJOR=`grep "\<$NAME\$" /proc/devices | sed "s/^ *//" | cut -d" " -f1`
+    [ -n "$MAJOR" ] && mknod $DEVPATH $TYPE $MAJOR $MINOR
+}
+
+makedev "$1" rtc c
+makedev "$1" ttyO c 0
+makedev "$1" ttyO c 1
+makedev "$1" ttyO c 2
+makedev "$1" ttyO c 3
+makedev "$1" ttyPS c 0
+makedev "$1" ttyPS c 1
+

@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# The process for reflashing a titan-v5e-fxt uController involves adding a line
+# to boot.cfg.  This line should later be removed, on the first good Linux boot
+# (although it is mostly benign if left in).
+#
+if [ -n $BOOT_CFG ]; then
+    BOOT_CFG_FLASH_COMMENT="# __BOOT-CFG__ flash"
+    if grep -q "$BOOT_CFG_FLASH_COMMENT" "$BOOT_CFG" ; then
+        # Remove flash comment and the following line, which contains
+        # the actual relfash script command
+        echo "Removing used flash command from $BOOT_CFG"
+        sed -e "/$BOOT_CFG_FLASH_COMMENT/{N;d;}" $BOOT_CFG > /media/sd/boot.tmp
+        mv $BOOT_CFG /media/sd/boot.old
+        mv /media/sd/boot.tmp $BOOT_CFG
+        sync
+    fi
+fi
+

@@ -1,0 +1,149 @@
+#!/bin/sh
+
+# Only run ov V5x boards.
+BOARD=`uname -r | cut -d_ -f2`
+test ! "$BOARD" = "titan-v5x-fxt" && exit 1
+
+V5X_PN=`printf "\xA0\x01\x0C\x00\x36" > /dev/iv_i2c_v5x_0; cat  /dev/iv_i2c_v5x_0`
+UB_PN=`printf "\xA0\x01\x0C\x00\x36" > /dev/iv_i2c_v5x_1; cat  /dev/iv_i2c_v5x_1`
+if [ "$UB_PN" != "205-00030-00" ]; then
+    echo "Skipping PCIe init."
+    exit 0;
+fi
+if [ "$V5X_PN" != "205-00021-00" ]; then
+    echo "Warning: Running PCIe on non-V5x board."
+fi
+
+echo "Initialize PCIe Line Driver"
+printf "\xB0\x02\x00\x00\x00\x01" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x10\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x17\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x1E\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x25\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x2D\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x34\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x3B\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x42\x0F" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x0E\x20" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x15\x20" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x1C\x20" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x23\x20" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x0F\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x16\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x1D\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x24\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x2E\xE8" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x35\xE8" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x3C\xE8" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x43\xE8" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x2C\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x33\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x3A\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x41\x2A" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x11\xE8" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x18\xE8" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x1F\xE8" > /dev/iv_i2c_v5x_1
+printf "\xB0\x02\x00\x00\x26\xE8" > /dev/iv_i2c_v5x_1
+
+echo "Setup GPIO Device PCIe Status Lines"
+printf "\xE8\x02\x00\x00\x02\x36" > /dev/iv_i2c_v5x_1
+printf "\xE8\x02\x00\x00\x06\xC1" > /dev/iv_i2c_v5x_1
+
+# Setup the Clock to receive the REFCLK from the PCIe cable
+echo "Initialize Clock Generator"
+printf "\xE2\x02\x00\x00\x06\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x1B\x70" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x1C\x03" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x1D\xA0" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x1E\xA0" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x1F\x03" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x20\x02" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x21\xE3" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x22\xE3" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x23\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x24\x07" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x25\x07" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x26\x06" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x27\x06" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x30\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x33\xC0" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x34\x10" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x35\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x36\x0B" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x37\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x38\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x39\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x3A\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x3B\x01" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x3C\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x3D\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x3E\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x3F\x10" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x40\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x41\x0B" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x42\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x43\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x44\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x45\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x46\x01" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x47\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x48\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x49\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x4A\x10" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x4B\x80" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x4C\xFE" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x4D\x03" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x4E\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x4F\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x50\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x51\x01" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x52\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x53\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x54\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x55\x10" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x56\x80" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x57\xFE" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x58\x03" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x59\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x5A\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x5B\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x5C\x01" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x5D\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x5E\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x5F\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x61\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x62\x32" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x63\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x64\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x65\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x66\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x67\x01" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x68\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x69\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x6A\x80" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x6B\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x6C\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x6D\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x6E\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x6F\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x70\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x71\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x72\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x73\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x74\x80" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x75\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x76\x40" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x77\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x78\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x79\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x7A\x40" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\x90\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\xDB\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\xE2\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\xE6\x00" > /dev/iv_i2c_v5x_1
+printf "\xE2\x02\x00\x00\xF2\x02" > /dev/iv_i2c_v5x_1
+
+# Perform Soft Reset of Clock Generator
+echo "Soft Resetting Clock Generator"
+sleep 1
+printf "\xE2\x02\x00\x00\xF6\x00" > /dev/iv_i2c_v5x_1

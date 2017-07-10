@@ -1,0 +1,294 @@
+#!/bin/sh
+ 
+SD_TIMEOUT_US=10000000
+SD_TIMEOUT_POLL_PERIOD_US=100000
+ROOT_MOUNTED=0
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+
+#
+# Set defaults
+#
+INIT_ALTERNATES="/init /sbin/init"
+
+#
+# echo start.  Add extra CRLF, as we often are clobbered by printk()s.
+#
+echo
+echo "Starting init script."
+
+#
+# Make rootdevs early, in case preinit script wants to use them.  They have to
+# be remade on the real root once we mount it.
+#
+makedevs -d /etc/rootdevs / 2>/dev/null; sh /etc/morerootdevs /
+
+#
+# Run a pre-init script, if exists.
+#
+PREINIT=/etc/rc.d/rc.preinit
+if [ -f $PREINIT ]; then
+    sh $PREINIT
+fi
+
+# The booting SD card is determined from the kernel command line parameter iv_mmc
+IV_MMC=`cat /proc/cmdline | tr " " "\n" | grep iv_mmc= | cut -d= -f2`
+test -z "${IV_MMC}" && IV_MMC=0
+
+#
+# Attempt to mount SD card partition 1 and find boot.cfg.  Note, SD card may
+# not be ready yet - so we wait for it, with a timeout.
+#
+while ! mount -t vfat /dev/mmcblk${IV_MMC}p1 /mnt/sd 2>/dev/null && [ $SD_TIMEOUT_US -ge 0 ]; do
+    usleep $SD_TIMEOUT_POLL_PERIOD_US
+    SD_TIMEOUT_US=$(($SD_TIMEOUT_US-$SD_TIMEOUT_POLL_PERIOD_US))
+done
+if [ $SD_TIMEOUT_US -ge 0 ]; then
+    for cfg in /mnt/sd/boot/boot.cfg /mnt/sd/boot.cfg; do
+        if [ -f $cfg ]; then
+            echo "Processing boot config file $cfg"
+            . $cfg
+            break
+        fi
+    done
+else
+    echo Boot config file not found.  Using defaults.
+    ROOTFS=RAMFS
+fi
+
+# 
+# Remount the SD card with user options: We try to mount the sd dir with
+# boot.cfg options, if given.  If it fails, we'll try again without
+# options.
+#
+echo "Mounting Boot Partition /dev/mmcblk${IV_MMC}p1 with user options:"
+echo "    ${SD_BOOTPART_MOUNT_OPTS:-none}"
+umount /mnt/sd
+mount ${SD_BOOTPART_MOUNT_OPTS} /dev/mmcblk${IV_MMC}p1 /mnt/sd
+if [ $? -ne 0 ]; then
+    echo "Mount of /dev/mmcblk${IV_MMC}p1 failed."
+    echo "Remounting Boot Partition /dev/mmcblk${IV_MMC}p1 without options."
+    mount /dev/mmcblk${IV_MMC}p1 /mnt/sd
+fi
+
+#
+# Network setup
+#
+if [ $IPSPEC ]; then
+    # Parse IPSPEC
+    TARGET_IP="`echo $IPSPEC | cut -d: -f1`"
+    NFS_IP="`echo $IPSPEC | cut -d: -f2`"
+    GATEWAY_IP="`echo $IPSPEC | cut -d: -f3`"
+    NETMASK="`echo $IPSPEC | cut -d: -f4`"
+    HOSTNAME="`echo $IPSPEC | cut -d: -f5`"
+    DEVICE="`echo $IPSPEC | cut -d: -f6`"
+    AUTOCONF="`echo $IPSPEC | cut -d: -f7`"
+
+    #
+    # Setup default DEVICE, if it wasn't given.
+    #
+    if [ -z "$DEVICE" ]; then
+        DEVICE=eth0
+    fi
+
+    #
+    # If AUTOCONF = off, then setup static IP, else use dhcp.
+    #
+    if echo $AUTOCONF | grep -iq "^off$"; then
+        # Set ip
+        if [ $NETMASK ]; then
+            NETMASK_ARG="netmask $NETMASK"
+        fi
+        ifconfig $DEVICE $TARGET_IP $NETMASK_ARG
+
+        # Add hostname if given.
+        if [ $HOSTNAME ]; then
+            hostname $HOSTNAME
+        fi
+
+        # Add gateway if given.
+        if [ $GATEWAY_IP ]; then
+            route add default gw $GATEWAY_IP $DEVICE
+        fi
+
+    else
+        if ! echo $AUTOCONF | grep -iq "^dhcp$"; then
+            echo "AUTOCONF is set to \"$AUTOCONF\", which is invalid - using DHCP instead."
+        fi
+        ifconfig $DEVICE up
+        dos2unix /usr/share/udhcpc/default.script
+        chmod +x /usr/share/udhcpc/default.script
+        udhcpc -fnq
+    fi
+fi
+
+#
+# Parse NFSROOT.  Format:
+#
+# NFSROOT=<nfs_server_ip>:<nfs_abs_path>,<nfs_options>
+#
+# Options are optional.  Server IP is optional, if it is given in IPSPEC.
+#
+if [ $NFSROOT ]; then
+    # Parse NFSROOT.  NFS_IP in NFSROOT overrides IPSEC, if given.
+    if echo $NFSROOT | grep -q "," ; then
+        NFS_OPTS="-o `echo $NFSROOT | cut -d, -f2-`"
+    fi
+    if echo $NFSROOT | grep -q ":" ; then
+        NFS_IP="`echo $NFSROOT | cut -d: -f1`"
+    fi
+    NFS_PATH="`echo $NFSROOT | cut -d: -f2 | cut -d, -f1`"
+fi
+
+#
+# Attempt to mount ROOTIMG on SD card, if requested (or by default).
+#
+loopback_sd_root_image()
+{
+    while [ $1 ] && [ ! -f /mnt/sd/$1 ]; do
+        shift
+    done
+
+    # return error if all args were shifted thru.
+    if [ $1 ]; then
+        echo "SD root image found at \"$1\"."
+        losetup /dev/loop0 "/mnt/sd/$1"
+    else
+        return 1 # failed
+    fi
+}
+
+if [ $ROOT_MOUNTED -eq 0 ] &&  [ ! $ROOTFS ] || [ "$ROOTFS" = "SDFS" ]; then
+    echo Attempting to mount SD Flash FS...
+
+    # Setup default ROOTIMG locations if not given.
+    if [ ! $ROOTIMG ]; then
+        ROOTIMG="/boot/root.img /root.img"
+    fi
+
+    if loopback_sd_root_image $ROOTIMG; then
+        #
+        # Do the mount.  Force readonly.
+        #
+        if mount -o ro /dev/loop0 /mnt/root; then
+            ROOT_MOUNTED=1
+            ROOTFS=SDFS
+        fi
+    fi
+
+    if [ $ROOT_MOUNTED -eq 0 ]; then
+        ROOTFS=RAMFS
+    fi
+fi
+
+#
+# FUTURE: Add support for mounting linear flash (MTD) devices.
+#
+if [ $ROOT_MOUNTED -eq 0 ] && [ ! $ROOTFS ] || [ "$ROOTFS" = "FLASHFS" ]; then
+    echo Booting from linear flash not currently supported.
+    ROOTFS=RAMFS
+fi
+
+#
+# Attempt to mount NFS, if requested (or by default).
+#
+if [ $ROOT_MOUNTED -eq 0 ] && [ ! $ROOTFS ] || [ "$ROOTFS" = "NFS" ]; then
+    echo Attempting to mount NFS...
+    echo IPSPEC is "\"$IPSPEC\""
+    echo NFSROOT is "\"$NFSROOT\""
+
+    if mount -o nolock $NFS_OPTS $NFS_IP:$NFS_PATH /mnt/root; then
+        ROOT_MOUNTED=1
+        ROOTFS=NFS
+    else
+        ROOTFS=RAMFS
+    fi
+fi
+
+#
+# Switch root to the successfully mounted Root FS.  Otherwise, boot to RAMFS.
+#
+if [ $ROOT_MOUNTED -gt 0 ]; then
+    mount -t proc proc /mnt/root/proc
+    mount -t sysfs sys /mnt/root/sys
+
+    mount -t tmpfs -o size=16k tmpfs /mnt/root/dev
+    mount -t tmpfs tmpfs /mnt/root/tmp
+
+    #
+    # Mount a tmpfs to /lib/modules, so we can create a modules.dep to avoid
+    # modprobe error messages.
+    #
+    mount -t tmpfs -o size=16k tmpfs /mnt/root/lib/modules
+    mkdir -p /mnt/root/lib/modules/`uname -r`
+    touch /mnt/root/lib/modules/`uname -r`/modules.dep
+
+    #
+    # Mount a tmpfs to /media, and remount the sd dir in there.
+    #
+    mount -t tmpfs -o size=32M tmpfs /mnt/root/media
+    mkdir /mnt/root/media/sd
+    mount /mnt/sd /mnt/root/media/sd
+
+    #
+    # Required for Android: if there's a /data dir, mount it as tmpfs so it'll
+    # be read/write.  It could be optionally mounted on top of (e.g. mounting
+    # it to a SD partition) via the PREROOT_SCRIPT.
+    #
+    if [ -d /mnt/root/data ]; then
+        mount -t tmpfs tmpfs /mnt/root/data
+    fi
+
+    #
+    # Recreate /etc as a tmpfs (so that its writable), and copy it from the
+    # ramfs NOT the rootfs.  Therefore it's the etc in the Linux's ramfs that
+    # is used, and the rootfs's etc is a don't care.
+    #
+    # There's one file we keep - the rootfs_version (TODO: it would make more
+    # sense if that got stored elsewhere, so we don't have to copy it)
+    #
+    mount -t tmpfs -o size=2M tmpfs /tmp
+    if ! cp -af /etc/* /tmp 2>/dev/null ; then
+        echo "Failed copying /etc to read/write tmpfs.  Perhaps /etc is too big?"
+    fi
+    cp -af /mnt/root/etc/rootfs_version /tmp 2>/dev/null
+    mount --move /tmp /mnt/root/etc
+
+    makedevs -d /etc/rootdevs /mnt/root; sh /etc/morerootdevs /mnt/root
+
+    #
+    # Pre-rootfs script
+    #
+    if [ -f "$PREROOT_SCRIPT" ]; then
+        sh "$PREROOT_SCRIPT"
+    fi
+
+    #
+    # If INIT is given, use it.  Otherwise, fallback to predefined locations.
+    #
+    if [ -z "$INIT" -o ! -x /mnt/root/$INIT ]; then
+        # Display a warning if INIT was given but isn't executable.
+        if [ -n "$INIT" ]; then
+            echo "Given INIT \"$INIT\" is not found or not executable.  Trying alternates."
+        fi
+        for i in $INIT_ALTERNATES; do
+            if [ -x /mnt/root/$i ]; then
+                INIT=$i
+                break
+            fi
+        done
+    fi
+    if [ -z "$INIT" ]; then
+        echo "No INIT found.  Fallback to RAMFS."
+        exec /sbin/init
+    else
+        echo "Mounting root on $ROOTFS, and spawning $INIT..."
+        exec switch_root /mnt/root $INIT
+    fi
+else
+    if [ "$ROOTFS" != "RAMFS" ]; then
+        echo "ROOTFS variable is invalid (ROOTFS=$ROOTFS).  Using RAMFS."
+    fi
+    echo "Booting RAMFS"
+    exec /sbin/init
+fi

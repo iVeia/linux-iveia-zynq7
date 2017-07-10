@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Make a writeable /var/log
+if [ ! -d /var/log ]; then
+    echo "No /var/log directory; SSH will not function properly"
+else
+    mount -o size=100k -t tmpfs tmpfs /var/log
+    touch /var/log/wtmp
+    touch /var/log/lastlog
+fi
+

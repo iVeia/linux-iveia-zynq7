@@ -1,0 +1,34 @@
+#!/bin/sh
+
+mount -t proc proc proc 2>/dev/null
+
+cat /etc/rootfs_version
+
+if [ -f /media/sd/boot/startup.sh ]; then
+    APP=/media/sd/boot/startup.sh
+elif [ -f /media/sd/startup.sh ]; then
+    APP=/media/sd/startup.sh
+fi
+
+if [ -f /media/sd/boot/boot.cfg ]; then
+    BOOT_CFG=/media/sd/boot/boot.cfg;
+elif [ -f /media/sd/boot.cfg ]; then
+    BOOT_CFG=/media/sd/boot.cfg;
+fi
+export BOOT_CFG
+
+# Extra script that the user can run at the end, if it exists.
+USERSCRIPT=/etc/rc.d/rcS.user
+test ! -f $USERSCRIPT && unset USERSCRIPT
+
+# run the init.d startup scripts
+echo "Running startup scripts"
+for SCRIPT in /etc/rc.d/init.d/[0-9][0-9]-* $USERSCRIPT $APP; do
+    echo "  $SCRIPT"
+    sh $SCRIPT
+done
+echo "Startup scripts complete"
+
+# usleep allows console serial port to get emptied
+usleep 200000
+

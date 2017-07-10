@@ -1,0 +1,9 @@
+#!/bin/sh
+
+sh /etc/rc.d/init201.sh
+sh /etc/rc.d/initgpios.sh
+sh /etc/rc.d/initusbhub.sh
+sh /etc/rc.d/initaep.sh
+sh /etc/rc.d/initcodec.sh
+
+
